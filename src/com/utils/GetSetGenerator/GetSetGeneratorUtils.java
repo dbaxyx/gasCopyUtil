@@ -122,9 +122,9 @@ public class GetSetGeneratorUtils {
         //校验源对象是否包含目标对象所需要拷贝的全部字段
         boolean fieldsNumberCanCopy = srcFieldsNameSets.containsAll(descFieldsNameSets);
         System.out.println("is ok:" + fieldsNumberCanCopy);
-        /*for (Field field : desFields) {
+        for (Field field : desFields) {
             System.out.println("des filed:" + field.getName());
-        }*/
+        }
         return true;
     }
 }
