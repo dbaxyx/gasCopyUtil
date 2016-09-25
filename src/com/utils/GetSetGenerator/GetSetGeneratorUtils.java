@@ -16,45 +16,49 @@ import java.util.*;
  */
 public class GetSetGeneratorUtils {
     public static void main(String[] args) {
-        fromSourceToDestination(new Person(), new Human());
-       /* Set<String> set1 = new HashSet<String>();
-        Set<String> set2 = new HashSet<String>();
-        set1.add("abc");
-        set1.add("bcd");
-        set2.add("bcd");
-        set2.add("abc");
-        System.out.println(set1.equals(set2));*/
+        try {
+            Person p = new Person();
+            p.setName("肖邦");
+            p.setAge(27);
+            p.setHeight(167.7);
+            Object obj = fromSourceToDestination(p, new Human());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
-    public static Object fromSourceToDestination(Object src, Object des) {
-        try {
+    public static Object fromSourceToDestination(Object src, Object des) throws Exception {
             //desClazz目标Pojo类Class对象
             Class<?> desClazz = des.getClass();
             //srcClazz源Pojo类Class对象
             Class<?> srcClazz = src.getClass();
+            //校验是否满足拷贝条件，如果不满足会直接抛出异常，过程终止
             canCopyValidate(srcClazz, desClazz);
             //分别拿到目标对象的set方法列表以及源对象类的get方法列表
             Map<String, Class<?>[]> destinationObjectMethodMaps = getDestinationObjectMethodlist(desClazz.getDeclaredMethods());
             Map<String, Class<?>[]>  sourceObjectMethodMaps = getSourceObjectMethodlist(srcClazz.getDeclaredMethods());
             Set sourceObjectMethodSets = sourceObjectMethodMaps.keySet();
             Set destinationObjectMethodSets = destinationObjectMethodMaps.keySet();
-            /*for (Object obj : sourceObjectMethodSets) {
-                System.out.println("Source:"+obj.toString());
+            //构建目标对象
+            Object desNewObj = desClazz.newInstance();
+            //构建源对象
+            for (Iterator iteratorOfSource = sourceObjectMethodSets.iterator();iteratorOfSource.hasNext();){
+                String getMethodName = iteratorOfSource.next().toString();
+                Class<?>[] clazzSrc = sourceObjectMethodMaps.get(getMethodName);
+                Method methodSrc = srcClazz.getMethod(getMethodName, clazzSrc);
+                Object obj = methodSrc.invoke(src,clazzSrc);
+                for (Iterator iteratorOfDes = destinationObjectMethodSets.iterator();iteratorOfDes.hasNext();){
+                    //比较外层方法名，从方法名第4个(包含头不包含尾)字符开始截取做比较，字面值相等则对目标对象相应字段设赋值
+                    if(iteratorOfDes.next().toString().substring(3,iteratorOfDes.next().toString().length()).equals(iteratorOfDes.next().toString().substring(3,iteratorOfDes.next().toString().length()))){
+                        Class<?>[] clazzDes = destinationObjectMethodMaps.get(iteratorOfDes.next().toString());
+                        Method methodDes = desClazz.getMethod(iteratorOfDes.next().toString(), clazzDes);
+                        methodDes.invoke(desNewObj, clazzDes);
+                    }
+                }
+
             }
-            System.out.println("-----------------------------");
-            for (Object obj : destinationObjectMethodSets) {
-                System.out.println("Des:"+obj.toString());
-            }*/
-            /*//如果为全拷贝则两个Set必须相等
-            if (sourceObjectMethodSets.equals(destinationObjectMethodSets)){
-
-            }else {
-                throw new CopyException("源对象与目标对象属性个数不相等！");
-            }*/
-        } catch (Exception e){
-
-        }
-        return null;
+        return desNewObj;
     }
 
 
@@ -111,19 +115,18 @@ public class GetSetGeneratorUtils {
         }
         //将源对象及目标对象属性名称放入集合进行校验
         Set<String> srcFieldsNameSets = new HashSet<String>();
-        for (Field field : desFields) {
+        for (Field field : srcFields) {
             srcFieldsNameSets.add(field.getName());
         }
 
-        Set<String> descFieldsNameSets = new HashSet<String>();
-        for (Field field : srcFields) {
-            descFieldsNameSets.add(field.getName());
+        Set<String> desFieldsNameSets = new HashSet<String>();
+        for (Field field : desFields) {
+            desFieldsNameSets.add(field.getName());
         }
         //校验源对象是否包含目标对象所需要拷贝的全部字段
-        boolean fieldsNumberCanCopy = srcFieldsNameSets.containsAll(descFieldsNameSets);
-        System.out.println("is ok:" + fieldsNumberCanCopy);
-        for (Field field : desFields) {
-            System.out.println("des filed:" + field.getName());
+        boolean fieldsNumberCanCopy = srcFieldsNameSets.containsAll(desFieldsNameSets);
+        if(!fieldsNumberCanCopy){
+            throw new CopyException("源对象属性值无法满足目标对象拷贝！");
         }
         return true;
     }
