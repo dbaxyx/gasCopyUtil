@@ -17,17 +17,27 @@ import java.util.*;
 public class GetSetGeneratorUtils {
     public static void main(String[] args) {
         try {
-            Person p = new Person();
-            p.setName("肖邦");
-            p.setAge(27);
-            p.setHeight(167.7);
-            Object obj = fromSourceToDestination(p, new Human());
+            long start = System.currentTimeMillis();
+            for (int i=0; i< 10000; i++){
+                Person p = new Person();
+                p.setName("肖邦");
+                p.setAge(27);
+                p.setHeight(167.7);
+                Object obj = fromSourceToDestination(p, new Human());
+            }
+            long stop = System.currentTimeMillis();
+            System.out.println("This time cost's "+ (stop - start)+" mils");
         }catch (Exception e){
             e.printStackTrace();
         }
 
     }
 
+    /**
+     * @Author xiaoyx hello.dba2@gmail.com
+     * @Date 2016-9-16 17:20
+     * @Description 拷贝的核心方法，从源src对象拷贝到目标对象des
+     */
     public static Object fromSourceToDestination(Object src, Object des) throws Exception {
             //desClazz目标Pojo类Class对象
             Class<?> desClazz = des.getClass();
@@ -50,13 +60,14 @@ public class GetSetGeneratorUtils {
                 Object obj = methodSrc.invoke(src,clazzSrc);
                 for (Iterator iteratorOfDes = destinationObjectMethodSets.iterator();iteratorOfDes.hasNext();){
                     //比较外层方法名，从方法名第4个(包含头不包含尾)字符开始截取做比较，字面值相等则对目标对象相应字段设赋值
-                    if(iteratorOfDes.next().toString().substring(3,iteratorOfDes.next().toString().length()).equals(iteratorOfDes.next().toString().substring(3,iteratorOfDes.next().toString().length()))){
-                        Class<?>[] clazzDes = destinationObjectMethodMaps.get(iteratorOfDes.next().toString());
-                        Method methodDes = desClazz.getMethod(iteratorOfDes.next().toString(), clazzDes);
-                        methodDes.invoke(desNewObj, clazzDes);
+                    String setMethodName = iteratorOfDes.next().toString();
+                    //src是源对象，通过反射需要调用其get方法拿到值，sec是目标对象最终调用其set方法赋值，这里通过取到二者方法名从第三位起截取字符串进行字段属性名称比较，如果二者字面值相等则对目标对象set方法赋值并调用
+                    if(setMethodName.substring(3,setMethodName.length()).equals(getMethodName.substring(3,getMethodName.length()))){
+                        Class<?>[] clazzDes = destinationObjectMethodMaps.get(setMethodName);
+                        Method methodDes = desClazz.getMethod(setMethodName, clazzDes);
+                        methodDes.invoke(desNewObj, obj);
                     }
                 }
-
             }
         return desNewObj;
     }
